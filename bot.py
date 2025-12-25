@@ -29,9 +29,9 @@ os.makedirs(PDF_DIR, exist_ok=True)
 os.makedirs(TOOL_DIR, exist_ok=True)
 
 if not BOT_TOKEN:
-    raise RuntimeError("❌ BOT_TOKEN not found")
+    raise RuntimeError("BOT_TOKEN")
 if not GROQ_API_KEY:
-    raise RuntimeError("❌ GROQ_API_KEY not found")
+    raise RuntimeError("GROQ_API_KEY")
 
 # ================== GROQ CLIENT ==================
 groq_client = Groq(api_key=GROQ_API_KEY)
