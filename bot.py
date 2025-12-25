@@ -1,4 +1,5 @@
 import os
+import asyncio
 import time
 import requests
 from telegram import (
@@ -241,32 +242,49 @@ async def group_ai_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     if update.message.chat.type not in ["group", "supergroup"]:
         return
-async def private_ai_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.strip()
+async def ask(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text or ""
+
     if not text.startswith("/ask"):
         return
 
     question = text.replace("/ask", "").strip()
+
     if not question:
-        await update.message.reply_text("❗ ប្រើ /ask សំណួរ")
+        await update.message.reply_text("❓ ប្រើ: /ask សំណួរ")
         return
 
     await update.message.reply_text("🤖 កំពុងគិត...")
-    answer = await ask_groq(question, update.message.chat.id, update.message.from_user.id)
-    await update.message.reply_text(answer)
-    text = update.message.text or ""
-    if not text.startswith("/ask"):
-        returnquestion = text.replace("/ask", "").strip()
-    if not returnquestion:
-        await update.message.reply_text("❗ ប្រើ /ask សំណួរ")
+
+    if not GROQ_API_KEY:
+        await update.message.reply_text("❌ AI មិនដំណើរការ (API Key)")
         return
 
+    try:
+        response = await asyncio.wait_for(
+            groq_client.chat.completions.create(
+                model="llama3-8b-8192",
+                messages=[{"role": "user", "content": question}]
+            ),
+            timeout=15
+        )
+
+        answer = response.choices[0].message.content
+        await update.message.reply_text(answer)
+
+    except asyncio.TimeoutError:
+        await update.message.reply_text("⏱️ AI ឆ្លើយយឺត សូមសាកម្ដងទៀត")
+
+    except Exception as e:
+        await update.message.reply_text("❌ AI error / limit")
+        print("AI ERROR:", e)
     chat_id = update.message.chat.id
     user_id = update.message.from_user.id
 
     await update.message.reply_text("🤖 កំពុងគិត...")
-    answer = await ask_groq(returnquestion, chat_id, user_id)
+    answer = await ask_groq( chat_id, user_id)
     await update.message.reply_text(answer)
+    question = text.replace("/ask", "").strip()
 
 # ================= IMAGE GENERATOR (HF) =================
 def generate_image(prompt: str):
@@ -319,9 +337,7 @@ def main():
     # Group AI
     app.add_handler(MessageHandler(filters.TEXT & filters.ChatType.GROUPS, group_ai_handler))
 
-    app.add_handler(
-    MessageHandler(filters.TEXT & filters.ChatType.PRIVATE, private_ai_handler)
-)
+
 
     # Callbacks
     app.add_handler(CallbackQueryHandler(download_pdf, pattern="^download_pdf\\|"))
