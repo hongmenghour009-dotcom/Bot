@@ -21,8 +21,8 @@ from groq import Groq
 BOT_TOKEN = os.getenv("8364057675:AAEIkZWpwKh8CEOIPntSM4ANYtbPMr-RAmI")
 if not BOT_TOKEN:
     BOT_TOKEN = "8364057675:AAEIkZWpwKh8CEOIPntSM4ANYtbPMr-RAmI"
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-HF_API_KEY = os.getenv("HF_API_KEY")
+GROQ_API_KEY = os.getenv("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")
+HF_API_KEY = os.getenv("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")
 
 PDF_DIR = "pdf_lessons"
 TOOL_DIR = "tools"
@@ -241,7 +241,19 @@ async def group_ai_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     if update.message.chat.type not in ["group", "supergroup"]:
         return
+async def private_ai_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text.strip()
+    if not text.startswith("/ask"):
+        return
 
+    question = text.replace("/ask", "").strip()
+    if not question:
+        await update.message.reply_text("❗ ប្រើ /ask សំណួរ")
+        return
+
+    await update.message.reply_text("🤖 កំពុងគិត...")
+    answer = await ask_groq(question, update.message.chat.id, update.message.from_user.id)
+    await update.message.reply_text(answer)
     text = update.message.text or ""
     if not text.startswith("/ask"):
         returnquestion = text.replace("/ask", "").strip()
@@ -306,6 +318,10 @@ def main():
 
     # Group AI
     app.add_handler(MessageHandler(filters.TEXT & filters.ChatType.GROUPS, group_ai_handler))
+
+    app.add_handler(
+    MessageHandler(filters.TEXT & filters.ChatType.PRIVATE, private_ai_handler)
+)
 
     # Callbacks
     app.add_handler(CallbackQueryHandler(download_pdf, pattern="^download_pdf\\|"))
