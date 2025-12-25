@@ -21,8 +21,8 @@ from groq import Groq
 BOT_TOKEN = os.getenv("8364057675:AAEIkZWpwKh8CEOIPntSM4ANYtbPMr-RAmI")
 if not BOT_TOKEN:
     BOT_TOKEN = "8364057675:AAEIkZWpwKh8CEOIPntSM4ANYtbPMr-RAmI"
-GROQ_API_KEY = os.getenv("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")
-HF_API_KEY = os.getenv("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")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+HF_API_KEY = os.getenv("HF_API_KEY")
 
 PDF_DIR = "pdf_lessons"
 TOOL_DIR = "tools"
